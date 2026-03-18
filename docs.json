@@ -1,5 +1,6 @@
 {
   "$schema": "https://mintlify.com/schema.json",
+  "theme": "maple",
   "name": "Hannover Event – Interne Dokumentation",
   "colors": {
     "primary": "#1B4D6E",
