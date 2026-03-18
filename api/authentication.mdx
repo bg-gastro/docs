@@ -1,0 +1,41 @@
+---
+title: "Authentifizierung"
+description: "Wie die API-Requests authentifiziert werden."
+---
+
+## Bearer Token
+
+Alle API-Endpunkte (außer `/api/health`) erfordern einen `Authorization`-Header:
+
+```
+Authorization: Bearer {API_SECRET}
+```
+
+Das `API_SECRET` ist ein 64-Zeichen Hex-String, der mit `openssl rand -hex 32` generiert wurde. Er steht in der `.env` auf dem VPS.
+
+## Beispiel
+
+```bash
+curl -X POST https://api.events-52grad.de/api/send \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer {API_SECRET}" \
+  -d '{"to":"test@example.com","subject":"Test","text_body":"Hallo"}'
+```
+
+## Fehler-Responses
+
+| Status | Bedeutung |
+|--------|-----------|
+| `401` | Authorization-Header fehlt |
+| `403` | Ungültiges API-Secret |
+
+## Secret rotieren
+
+1. Neues Secret generieren: `openssl rand -hex 32`
+2. In `.env` auf dem VPS ersetzen
+3. `pm2 restart smtp-api`
+4. In WeWeb den Workflow aktualisieren
+
+<Warning>
+  Beim Rotieren muss das Secret gleichzeitig auf VPS und in WeWeb geändert werden, sonst schlägt der Versand fehl.
+</Warning>

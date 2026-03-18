@@ -1,0 +1,71 @@
+---
+title: "Collections"
+description: "Supabase Collections in WeWeb für das E-Mail-System."
+---
+
+## Benötigte Collections
+
+### 1. Posteingang (alle E-Mails)
+
+| Eigenschaft | Wert |
+|-------------|------|
+| **Name** | `emails` |
+| **Quelle** | Supabase |
+| **Tabelle** | `emails` |
+| **Select** | `*, email_attachments(*)` |
+| **Filter** | `is_archived` equals `false` |
+| **Order** | `date` descending |
+| **Limit** | 50 |
+
+### 2. E-Mails eines Kunden
+
+| Eigenschaft | Wert |
+|-------------|------|
+| **Name** | `customer_emails` |
+| **Quelle** | Supabase |
+| **Tabelle** | `emails` |
+| **Select** | `*, email_attachments(*)` |
+| **Filter** | `customer_id` equals `selectedCustomerId` (Page-Variable) AND `is_archived` equals `false` |
+| **Order** | `date` descending |
+| **Limit** | 50 |
+
+### 3. Threads
+
+| Eigenschaft | Wert |
+|-------------|------|
+| **Name** | `email_threads` |
+| **Quelle** | Supabase |
+| **Tabelle** | `email_threads` |
+| **Select** | `*` |
+| **Order** | `last_message_at` descending |
+| **Limit** | 50 |
+
+## Daten-Binding Tipps
+
+### Absender-Name anzeigen
+
+Die `from_address` ist ein JSONB-Objekt. In WeWeb:
+
+```
+item.from_address.name || item.from_address.address
+```
+
+### Empfänger anzeigen
+
+`to_addresses` ist ein JSONB-Array:
+
+```
+item.to_addresses[0].address
+```
+
+### Datum formatieren
+
+```
+new Date(item.date).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+```
+
+### Richtung als Badge
+
+```
+item.direction === 'inbound' ? 'Eingehend' : 'Gesendet'
+```

@@ -1,0 +1,61 @@
+---
+title: "Thread abrufen"
+description: "GET /api/thread/:threadId"
+api: "GET https://api.events-52grad.de/api/thread/{threadId}"
+---
+
+## Request
+
+```
+GET /api/thread/{threadId}
+Authorization: Bearer {API_SECRET}
+```
+
+### Parameter
+
+| Parameter | Typ | Beschreibung |
+|-----------|-----|-------------|
+| `threadId` | UUID | ID des Threads aus `email_threads` |
+
+## Response (200)
+
+```json
+{
+  "emails": [
+    {
+      "id": "uuid",
+      "message_id": "<abc@ionos.de>",
+      "direction": "inbound",
+      "from_address": {"name": "Max Mustermann", "address": "max@example.com"},
+      "to_addresses": [{"name": "", "address": "team@events-52grad.de"}],
+      "subject": "Anfrage Hochzeit Juli",
+      "text_body": "Guten Tag...",
+      "date": "2026-03-18T10:00:00Z",
+      "has_attachments": true,
+      "email_attachments": [
+        {
+          "id": "uuid",
+          "filename": "Einladung.pdf",
+          "content_type": "application/pdf",
+          "size_bytes": 245000,
+          "storage_path": "account-id/email-id/Einladung.pdf"
+        }
+      ]
+    },
+    {
+      "id": "uuid",
+      "message_id": "<def@ionos.de>",
+      "direction": "outbound",
+      "from_address": {"name": "Events 52 Grad", "address": "team@events-52grad.de"},
+      "to_addresses": [{"name": "Max Mustermann", "address": "max@example.com"}],
+      "subject": "Re: Anfrage Hochzeit Juli",
+      "text_body": "Vielen Dank für Ihre Anfrage...",
+      "date": "2026-03-18T11:30:00Z",
+      "has_attachments": false,
+      "email_attachments": []
+    }
+  ]
+}
+```
+
+E-Mails werden chronologisch sortiert (älteste zuerst).

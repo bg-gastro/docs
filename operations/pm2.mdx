@@ -1,0 +1,68 @@
+---
+title: "PM2"
+description: "Prozessmanagement auf dem VPS."
+---
+
+## Laufende Prozesse
+
+| PM2-Name | Datei | Funktion |
+|----------|-------|----------|
+| `imap-sync` | `src/sync/worker.js` | IMAP Sync Worker |
+| `smtp-api` | `src/api/server.js` | SMTP Versand-API |
+
+## Häufige Befehle
+
+```bash
+# Status aller Prozesse
+pm2 status
+
+# Logs anzeigen (alle)
+pm2 logs
+
+# Logs eines Prozesses
+pm2 logs imap-sync --lines 50
+pm2 logs smtp-api --lines 50
+
+# Prozess neu starten
+pm2 restart imap-sync
+pm2 restart smtp-api
+
+# Alle neu starten
+pm2 restart all
+
+# Prozess stoppen
+pm2 stop imap-sync
+
+# Status speichern (für Auto-Start nach Reboot)
+pm2 save
+
+# Monitoring (Live-Dashboard)
+pm2 monit
+```
+
+## Nach Code-Änderungen
+
+```bash
+cd ~/email-worker
+git pull origin main    # Falls Code über GitHub aktualisiert wird
+pm2 restart all
+```
+
+## Prozesse neu aufsetzen
+
+Falls PM2 komplett zurückgesetzt werden muss:
+
+```bash
+pm2 delete all
+pm2 start src/sync/worker.js --name imap-sync
+pm2 start src/api/server.js --name smtp-api
+pm2 save
+```
+
+## Auto-Start nach Reboot
+
+Ist bereits konfiguriert über `pm2 startup`. Verifikation:
+
+```bash
+systemctl status pm2-deploy
+```

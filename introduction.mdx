@@ -1,0 +1,35 @@
+---
+title: "Willkommen"
+description: "Interne technische Dokumentation für das Hannover Event Projekt der BG Gastro."
+---
+
+## Worum geht es?
+
+Hannover Event ist die zentralisierte Event-Management-Plattform der BG Gastro. Sie ersetzt die bisherige manuelle Anfragenverarbeitung über verteilte E-Mail-Postfächer durch ein einheitliches System, das Anfragen automatisch erfasst, Kunden zuordnet und den gesamten Kommunikationsverlauf transparent macht.
+
+## Tech Stack
+
+| Komponente | Technologie | Zweck |
+|------------|-------------|-------|
+| Frontend | WeWeb | Web-App für Mitarbeiter |
+| Backend | Supabase | Datenbank, Auth, Storage |
+| E-Mail Worker | Node.js auf VPS | IMAP-Sync + SMTP-Versand |
+| Reverse Proxy | Caddy | Automatisches HTTPS |
+| DNS / E-Mail | IONOS | Domain + dediziertes Postfach |
+
+## Beteiligte
+
+| Person | Rolle |
+|--------|-------|
+| Janina Pape | Projektleitung BG Gastro |
+| Andreas Grondey | Geschäftsführung BG Gastro |
+| Tomke Hockmann | Event-Management BG Gastro |
+| Diana Furche | BG Gastro |
+| Yukio / Weiss Global | Entwicklungspartner |
+
+## Repositories
+
+| Repo | Inhalt |
+|------|--------|
+| [bg-gastro/email-worker](https://github.com/bg-gastro/email-worker) | IMAP-Sync + SMTP-API (VPS) |
+| [bg-gastro/docs](https://github.com/bg-gastro/docs) | Diese Dokumentation |

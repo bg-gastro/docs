@@ -1,0 +1,114 @@
+---
+title: "Supabase"
+description: "Datenbankstruktur und Storage-Konfiguration."
+---
+
+## E-Mail-Tabellen
+
+Yukio hat das Datenbankschema entworfen. Hier die Übersicht der E-Mail-relevanten Tabellen:
+
+### `email_accounts`
+
+Konfiguration der angebundenen E-Mail-Konten.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| id | uuid | Primary Key |
+| email_address | text | E-Mail-Adresse |
+| display_name | text | Anzeigename |
+| imap_host | text | IMAP-Server |
+| imap_port | integer | IMAP-Port (993) |
+| smtp_host | text | SMTP-Server |
+| smtp_port | integer | SMTP-Port (465) |
+| encrypted_password | text | Passwort (Platzhalter, echtes PW in .env) |
+| is_active | boolean | Aktiv/Inaktiv |
+
+**Account-ID für `team@events-52grad.de`:** `0bd9c6b2-9ef2-4c9e-8066-a922e7c02a7c`
+
+### `emails`
+
+Alle ein- und ausgehenden E-Mails.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| id | uuid | Primary Key |
+| account_id | uuid | FK → email_accounts |
+| message_id | text | RFC Message-ID |
+| in_reply_to | text | Parent Message-ID (Threading) |
+| references | array | Gesamte Reference-Kette |
+| thread_id | uuid | FK → email_threads |
+| folder | text | IMAP-Ordner (INBOX, Gesendete Objekte) |
+| direction | text | `inbound` oder `outbound` |
+| uid | bigint | IMAP UID |
+| from_address | jsonb | `{name, address}` |
+| to_addresses | jsonb | `[{name, address}, ...]` |
+| cc_addresses | jsonb | `[{name, address}, ...]` |
+| bcc_addresses | jsonb | `[{name, address}, ...]` |
+| subject | text | Betreff |
+| text_body | text | Plain-Text-Body |
+| html_body | text | HTML-Body |
+| date | timestamptz | Sende-/Empfangsdatum |
+| has_attachments | boolean | Hat Anhänge? |
+| flags | array | IMAP-Flags (\Seen, \Flagged etc.) |
+| headers_raw | jsonb | Alle Header als Key-Value |
+| size_bytes | integer | Größe in Bytes |
+| is_read | boolean | Gelesen? |
+| is_starred | boolean | Markiert? |
+| is_archived | boolean | Archiviert (soft-delete)? |
+| customer_id | uuid | FK → customers |
+| company_id | uuid | FK → companies |
+| synced_at | timestamptz | Zeitpunkt der Synchronisation |
+
+### `email_threads`
+
+Gruppierung zusammengehöriger E-Mails.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| id | uuid | Primary Key |
+| account_id | uuid | FK → email_accounts |
+| thread_key | text | Erste Message-ID im Thread |
+| subject | text | Bereinigter Betreff (ohne Re:/AW:) |
+| last_message_at | timestamptz | Letzte Nachricht im Thread |
+| message_count | integer | Anzahl Nachrichten |
+| participant_addresses | array | Alle beteiligten E-Mail-Adressen |
+| is_unread | boolean | Ungelesene Nachrichten? |
+
+### `email_attachments`
+
+Datei-Anhänge.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| id | uuid | Primary Key |
+| email_id | uuid | FK → emails |
+| filename | text | Dateiname |
+| content_type | text | MIME-Type |
+| size_bytes | integer | Größe in Bytes |
+| storage_path | text | Pfad in Supabase Storage |
+| content_id | text | Content-ID für Inline-Bilder |
+| is_inline | boolean | Inline-Anhang? |
+| checksum | text | Prüfsumme |
+
+### `email_sync_state`
+
+Synchronisationsstatus pro Ordner.
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| id | uuid | Primary Key |
+| account_id | uuid | FK → email_accounts |
+| folder_name | text | IMAP-Ordnername |
+| uid_validity | bigint | IMAP UID Validity |
+| last_uid | bigint | Zuletzt synchronisierte UID |
+| sync_status | text | `idle`, `syncing`, `error` |
+| error_message | text | Letzte Fehlermeldung |
+| last_synced_at | timestamptz | Letzter erfolgreicher Sync |
+
+## Storage
+
+Anhänge werden in Supabase Storage gespeichert:
+
+- **Bucket:** `email-attachments` (privat)
+- **Pfadstruktur:** `{account_id}/{email_id}/{filename}`
+- **Max. Dateigröße:** 10 MB

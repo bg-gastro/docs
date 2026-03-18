@@ -1,0 +1,54 @@
+---
+title: "Workflows"
+description: "WeWeb Workflows für den E-Mail-Versand."
+---
+
+## E-Mail senden (Workflow)
+
+### Trigger
+
+Button-Click auf "Senden" im Compose-Formular.
+
+### Workflow-Steps
+
+1. **REST API Request**
+   - URL: `https://api.events-52grad.de/api/send`
+   - Method: `POST`
+   - Headers:
+     - `Content-Type`: `application/json`
+     - `Authorization`: `Bearer {API_SECRET}`
+   - Body (dynamisch):
+
+```json
+{
+  "to": "{{ formEmail }}",
+  "subject": "{{ formSubject }}",
+  "text_body": "{{ formBody }}",
+  "customer_id": "{{ selectedCustomerId }}",
+  "in_reply_to": "{{ selectedEmailMessageId }}"
+}
+```
+
+2. **On Success:**
+   - Formular zurücksetzen
+   - `customer_emails` Collection neu laden
+   - Erfolgsmeldung anzeigen
+
+3. **On Error:**
+   - Fehlermeldung anzeigen
+
+## Antworten auf eine Mail (Workflow)
+
+Wie oben, aber zusätzlich:
+
+- `in_reply_to` wird mit der `message_id` der ausgewählten Mail befüllt
+- `to` wird automatisch aus der `from_address` der Ursprungsmail übernommen
+- `subject` wird mit `Re: {original_subject}` vorausgefüllt
+
+## Collection Refresh
+
+Nach jedem erfolgreichen Versand sollten folgende Collections neu geladen werden:
+
+- `customer_emails` (falls in Kundendetail-View)
+- `emails` (falls in Posteingangs-View)
+- `email_threads` (für aktualisierte Thread-Infos)

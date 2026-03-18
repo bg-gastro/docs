@@ -1,0 +1,55 @@
+---
+title: "SMTP API"
+description: "Die Versand-API für ausgehende E-Mails."
+---
+
+## Überblick
+
+Die SMTP-API ist ein Express-Server auf Port 3000, erreichbar über:
+
+```
+https://api.events-52grad.de
+```
+
+Caddy fungiert als Reverse Proxy und stellt automatisch SSL-Zertifikate via Let's Encrypt bereit.
+
+## Was passiert beim Senden?
+
+1. WeWeb sendet POST-Request an `/api/send`
+2. API validiert den Request und das API-Secret
+3. Mail wird über `smtp.ionos.de` versendet
+4. Kopie wird per IMAP APPEND in "Gesendete Objekte" abgelegt
+5. Mail wird in `emails`-Tabelle gespeichert
+6. Thread wird aktualisiert oder neu erstellt
+7. Anhänge werden in Supabase Storage hochgeladen
+8. Response mit `id`, `messageId` und `threadId` zurück
+
+## Konfiguration
+
+```bash
+SMTP_HOST=smtp.ionos.de
+SMTP_PORT=465
+SMTP_USER=team@events-52grad.de
+SMTP_PASSWORD=***
+SMTP_FROM_NAME=Events 52 Grad
+SMTP_FROM_EMAIL=team@events-52grad.de
+API_SECRET=***
+API_PORT=3000
+```
+
+## Sicherheit
+
+- Alle Endpunkte (außer `/api/health`) sind mit Bearer-Token geschützt
+- CORS ist aktiviert für WeWeb
+- Helmet setzt Security-Header automatisch
+- Das `API_SECRET` ist ein 64-Zeichen Hex-String
+
+<Warning>
+  Das API_SECRET muss sowohl auf dem VPS (in `.env`) als auch in WeWeb (im Workflow) identisch sein. Wenn es auf einer Seite geändert wird, bricht der Versand.
+</Warning>
+
+## Logs prüfen
+
+```bash
+pm2 logs smtp-api --lines 50
+```

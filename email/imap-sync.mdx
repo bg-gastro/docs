@@ -1,0 +1,63 @@
+---
+title: "IMAP Sync"
+description: "Wie der IMAP-Sync Worker funktioniert."
+---
+
+## Funktionsweise
+
+Der Worker verbindet sich alle **2 Minuten** per IMAP mit dem IONOS-Postfach und prüft zwei Ordner auf neue Nachrichten:
+
+| IONOS-Ordnername | Interne Richtung |
+|------------------|-----------------|
+| `INBOX` | `inbound` |
+| `Gesendete Objekte` | `outbound` |
+
+## Sync-Ablauf pro Ordner
+
+1. **Sync-State laden** aus `email_sync_state` (letzte bekannte UID)
+2. **UID-Validity prüfen** — wenn geändert, ist ein vollständiger Resync nötig
+3. **Neue Mails abrufen** (nur UIDs größer als `last_uid`)
+4. **Archivierungs-Check** — UIDs die im Postfach fehlen werden als `is_archived` markiert
+5. Pro Mail:
+   - MIME-Parsing (Header, Body, Anhänge)
+   - Duplikat-Check über `message_id`
+   - Thread zuordnen oder erstellen
+   - Kunden-Matching über E-Mail-Adresse
+   - In `emails`-Tabelle speichern
+   - Anhänge in Supabase Storage hochladen
+6. **Sync-State aktualisieren** (neue `last_uid`)
+
+## Konfiguration
+
+Alle Werte werden über die `.env` gesteuert:
+
+```bash
+IMAP_HOST=imap.ionos.de
+IMAP_PORT=993
+IMAP_USER=team@events-52grad.de
+IMAP_PASSWORD=***
+EMAIL_ACCOUNT_ID=0bd9c6b2-9ef2-4c9e-8066-a922e7c02a7c
+```
+
+## Sync-Intervall ändern
+
+In `src/sync/worker.js`, Zeile:
+
+```javascript
+const SYNC_INTERVAL_MS = 2 * 60 * 1000; // Alle 2 Minuten
+```
+
+Nach Änderung: `pm2 restart imap-sync`
+
+## Fehlerbehandlung
+
+- Einzelne Mails die nicht geparst werden können, werden übersprungen — der Rest läuft weiter
+- Bei IMAP-Verbindungsfehlern wartet der Worker bis zum nächsten Intervall
+- Fehler werden im `email_sync_state` als `error_message` gespeichert
+- Alle Fehler werden in PM2-Logs geschrieben
+
+## Logs prüfen
+
+```bash
+pm2 logs imap-sync --lines 50
+```

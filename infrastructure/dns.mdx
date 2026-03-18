@@ -1,0 +1,54 @@
+---
+title: "DNS & E-Mail"
+description: "Domain-Konfiguration, SPF, DKIM, DMARC."
+---
+
+## Domain
+
+Die Domain `events-52grad.de` wird bei IONOS verwaltet.
+
+## DNS-Einträge
+
+| Typ | Host | Wert | Zweck |
+|-----|------|------|-------|
+| A | `@` | 217.160.0.204 | Webseite (IONOS Default) |
+| A | `api` | 217.154.76.29 | VPS (E-Mail Worker API) |
+| MX | `@` | mx00.ionos.de / mx01.ionos.de | E-Mail-Empfang |
+| TXT | `@` | `v=spf1 include:_spf-eu.ionos.com ~all` | SPF |
+| CNAME | `_dmarc` | dmarc.ionos.de | DMARC |
+| CNAME | `s1-ionos._domainkey` | s1.dkim.ionos.com | DKIM |
+| CNAME | `s2-ionos._domainkey` | s2.dkim.ionos.com | DKIM |
+
+## E-Mail-Authentifizierung
+
+IONOS hat SPF, DKIM und DMARC automatisch konfiguriert. Da der VPS über `smtp.ionos.de` versendet (nicht direkt), sind die bestehenden Records ausreichend — der VPS taucht nicht als eigener Sender auf.
+
+### SPF
+
+```
+v=spf1 include:_spf-eu.ionos.com ~all
+```
+
+Autorisiert alle IONOS-Mailserver als Sender für `events-52grad.de`.
+
+### DKIM
+
+IONOS signiert ausgehende Mails automatisch. Drei DKIM-Keys sind hinterlegt (s1, s2, s42582890).
+
+### DMARC
+
+Über CNAME auf `dmarc.ionos.de` delegiert — IONOS verwaltet die Policy.
+
+## Dediziertes Postfach
+
+| Eigenschaft | Wert |
+|-------------|------|
+| **Adresse** | `team@events-52grad.de` |
+| **Anzeigename** | Events 52 Grad |
+| **IMAP** | `imap.ionos.de:993` (SSL) |
+| **SMTP** | `smtp.ionos.de:465` (SSL) |
+| **Webmail** | https://mail.ionos.de |
+
+<Warning>
+  Das Passwort für dieses Postfach steht in der `.env` auf dem VPS. Wenn das Passwort bei IONOS geändert wird, muss es auch auf dem VPS aktualisiert werden, sonst bricht der Sync ab.
+</Warning>

@@ -1,0 +1,58 @@
+---
+title: "Anhänge"
+description: "Wie Anhänge verarbeitet und gespeichert werden."
+---
+
+## Eingehende Anhänge
+
+Der IMAP-Sync Worker extrahiert Anhänge beim MIME-Parsing automatisch:
+
+1. Mail wird mit `mailparser` geparst
+2. Jeder Anhang wird in Supabase Storage hochgeladen
+3. Metadaten werden in `email_attachments` gespeichert
+4. `has_attachments` wird auf `true` gesetzt
+
+### Speicherort
+
+```
+Bucket: email-attachments (privat)
+Pfad:   {account_id}/{email_id}/{filename}
+```
+
+### Limits
+
+| Eigenschaft | Wert |
+|-------------|------|
+| Max. Dateigröße pro Anhang | 10 MB |
+| Bucket-Typ | Privat (kein öffentlicher Zugriff) |
+
+Anhänge über 10 MB werden übersprungen und im Log als Warning ausgegeben.
+
+## Ausgehende Anhänge
+
+Beim Senden über die API werden Anhänge als Base64 im Request-Body übergeben:
+
+```json
+{
+  "to": "kunde@example.com",
+  "subject": "Ihr Angebot",
+  "text_body": "Anbei das Angebot.",
+  "attachments": [
+    {
+      "filename": "Angebot-2026.pdf",
+      "content": "JVBERi0xLjQK...",
+      "content_type": "application/pdf"
+    }
+  ]
+}
+```
+
+Die API speichert den Anhang sowohl in Supabase Storage als auch als SMTP-Attachment in der versendeten Mail.
+
+<Warning>
+  Das Request-Body-Limit der API liegt bei 15 MB (`express.json({ limit: '15mb' })`). Bei mehreren großen Anhängen kann das überschritten werden.
+</Warning>
+
+## Inline-Bilder
+
+Bilder die direkt im HTML-Body eingebettet sind (z.B. Signaturen) werden als Anhänge mit `is_inline = true` und einer `content_id` gespeichert. Sie erscheinen nicht in der Anhang-Liste, sind aber im HTML-Body referenziert.

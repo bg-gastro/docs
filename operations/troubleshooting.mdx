@@ -1,0 +1,129 @@
+---
+title: "Troubleshooting"
+description: "Häufige Probleme und deren Lösung."
+---
+
+## IMAP Sync läuft nicht
+
+### Symptom: `sync_status` steht auf `error`
+
+```bash
+pm2 logs imap-sync --lines 50
+```
+
+| Fehlermeldung | Ursache | Lösung |
+|---------------|---------|--------|
+| `authentication failed` | Passwort in `.env` stimmt nicht | Passwort in `.env` prüfen, ggf. im IONOS Webmail testen |
+| `Connection timeout` | IONOS blockiert die IP oder Port 993 ist nicht erreichbar | `telnet imap.ionos.de 993` testen |
+| `Do not know how to serialize a BigInt` | IMAP liefert BigInt-Werte | Alle `mailboxInfo.uidValidity` und `msg.uid` in `Number()` wrappen |
+| `Command failed` (bei Ordner) | Ordnername stimmt nicht | `node test-folders.js` ausführen und Namen prüfen |
+
+### Symptom: Keine neuen Mails trotz Posteingang
+
+1. `email_sync_state` prüfen — stimmt `last_uid`?
+2. Hat sich `uid_validity` geändert? → `last_uid` auf 0 setzen
+3. Worker neu starten: `pm2 restart imap-sync`
+
+## SMTP API antwortet nicht
+
+### Symptom: `curl` bekommt keine Antwort
+
+```bash
+# Läuft der Prozess?
+pm2 status
+
+# Läuft Caddy?
+sudo systemctl status caddy
+
+# Hört Express auf Port 3000?
+ss -tlnp | grep 3000
+```
+
+| Problem | Lösung |
+|---------|--------|
+| PM2 zeigt `stopped` oder `errored` | `pm2 restart smtp-api`, dann Logs prüfen |
+| Caddy zeigt Fehler | `sudo journalctl -u caddy --no-pager -n 30` |
+| Port 3000 nicht belegt | `pm2 start src/api/server.js --name smtp-api` |
+| SSL-Zertifikat abgelaufen | Caddy erneuert automatisch — `sudo systemctl restart caddy` |
+
+### Symptom: `502 Bad Gateway`
+
+Caddy läuft, aber Express nicht. Fix:
+
+```bash
+pm2 restart smtp-api
+pm2 logs smtp-api --lines 20
+```
+
+### Symptom: `401` oder `403`
+
+API-Secret stimmt nicht überein. Prüfen:
+
+```bash
+grep API_SECRET ~/email-worker/.env
+```
+
+Muss identisch sein mit dem Wert in WeWeb.
+
+## E-Mails landen im Spam
+
+### Prüfschritte
+
+1. SPF-Record testen: https://mxtoolbox.com/spf.aspx → `events-52grad.de` eingeben
+2. DKIM testen: https://mxtoolbox.com/dkim.aspx
+3. DMARC testen: https://mxtoolbox.com/dmarc.aspx
+
+Da der Versand über `smtp.ionos.de` läuft (nicht direkt vom VPS), sollten SPF/DKIM automatisch passen. Falls trotzdem Spam:
+
+- Absendername prüfen (sollte `Events 52 Grad` sein, nicht leer)
+- Betreffzeile prüfen (Spam-Trigger wie "!!!" oder GROSSBUCHSTABEN vermeiden)
+- Testmail an https://mail-tester.com senden für detaillierte Analyse
+
+## Doppelte E-Mails in Supabase
+
+### Ursache
+
+Wenn die API eine Mail sendet und sie im Gesendet-Ordner ablegt, könnte der IMAP-Sync sie nochmal erfassen.
+
+### Lösung
+
+Der Sync-Worker prüft über `message_id` auf Duplikate. Falls trotzdem doppelt:
+
+```sql
+-- Duplikate finden
+SELECT message_id, COUNT(*)
+FROM emails
+WHERE account_id = '0bd9c6b2-9ef2-4c9e-8066-a922e7c02a7c'
+GROUP BY message_id
+HAVING COUNT(*) > 1;
+
+-- Duplikate bereinigen (behält die älteste)
+DELETE FROM emails a
+USING emails b
+WHERE a.message_id = b.message_id
+  AND a.created_at > b.created_at;
+```
+
+## VPS nicht erreichbar
+
+1. Im IONOS Cloud Panel prüfen, ob der Server läuft
+2. Falls gestoppt: Starten über das Panel
+3. Falls gestartet aber nicht erreichbar: IONOS Support kontaktieren
+4. Nach Neustart: `pm2 status` prüfen — Prozesse sollten automatisch starten
+
+## .env verloren / Server neu aufsetzen
+
+1. Neuen VPS mit Ubuntu 24.04 aufsetzen
+2. Benutzer `deploy` anlegen, SSH-Key hinterlegen
+3. Repository klonen: `git clone git@github.com:bg-gastro/email-worker.git`
+4. `.env` manuell wiederherstellen (Werte aus Passwort-Manager)
+5. `npm install`
+6. PM2 einrichten und Prozesse starten
+7. Caddy installieren und Caddyfile konfigurieren
+8. DNS A-Record auf neue IP ändern
+
+Geschätzte Wiederherstellungszeit: 30–45 Minuten.
+
+<Warning>
+  Die `.env` ist die einzige Datei, die NICHT im Git liegt. Sichert die Werte in einem Passwort-Manager (z.B. 1Password, Bitwarden).
+</Warning>

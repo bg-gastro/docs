@@ -1,0 +1,35 @@
+---
+title: "Überblick"
+description: "Wie das E-Mail-System funktioniert."
+---
+
+## Zwei Prozesse, ein Postfach
+
+Das E-Mail-System besteht aus zwei unabhängigen Prozessen, die beide über PM2 auf dem VPS laufen:
+
+| Prozess | PM2-Name | Datei | Aufgabe |
+|---------|----------|-------|---------|
+| IMAP Sync Worker | `imap-sync` | `src/sync/worker.js` | Holt neue Mails aus dem Postfach |
+| SMTP API | `smtp-api` | `src/api/server.js` | Sendet Mails auf Anfrage |
+
+Beide Prozesse verwenden dasselbe dedizierte Postfach: `team@events-52grad.de`
+
+## Warum zwei getrennte Systeme für Transaktionsmails und persönliche Mails?
+
+| | Transaktionsmails | Persönliche Mails |
+|---|---|---|
+| **Beispiel** | Anfragebestätigung, Statusänderung | Antwort auf Kundenanfrage |
+| **Versand über** | Resend (via Supabase Edge Functions) | SMTP über IONOS |
+| **Absender** | no-reply oder system@ | team@events-52grad.de |
+| **Im Postfach sichtbar?** | Nein | Ja (Gesendet-Ordner) |
+| **Antwort möglich?** | Nein (no-reply) | Ja |
+
+## Kunden-Matching
+
+Bei jeder eingehenden Mail prüft der Worker, ob die Absender-Adresse einem bestehenden Kunden in der `customers`-Tabelle zugeordnet werden kann (Feld: `email`). Bei ausgehenden Mails wird der Empfänger gematcht.
+
+Wenn ein Match gefunden wird, werden `customer_id` und `company_id` automatisch in der Mail gespeichert. Das ermöglicht in WeWeb die Anzeige aller Mails pro Kunde.
+
+## Soft-Delete / Archivierung
+
+Wenn eine E-Mail im IONOS-Webmail gelöscht wird, erkennt der Sync-Worker das beim nächsten Zyklus und setzt `is_archived = true`. Die Mail wird nicht aus Supabase gelöscht — sie ist nur in der Standardansicht ausgeblendet.

@@ -1,0 +1,52 @@
+---
+title: "Architektur"
+description: "Überblick über die Systemarchitektur und den Datenfluss."
+---
+
+## Systemübersicht
+
+```
+┌─────────────┐     ┌──────────────────┐     ┌─────────────┐
+│   Kunde     │────▶│  IONOS Postfach   │────▶│    VPS      │
+│  (E-Mail)   │     │  team@events-     │     │ IMAP Sync   │
+└─────────────┘     │  52grad.de        │     │ Worker      │
+                    └──────────────────┘     └──────┬──────┘
+                              ▲                      │
+                              │                      ▼
+┌─────────────┐     ┌────────┴─────────┐     ┌─────────────┐
+│ Mitarbeiter │────▶│    VPS           │────▶│  Supabase   │
+│  (WeWeb)    │     │  SMTP API        │     │  Datenbank  │
+└─────────────┘     │  Port 3000       │     │  + Storage  │
+                    └──────────────────┘     └─────────────┘
+```
+
+## Datenfluss: Eingehende E-Mail
+
+1. Kunde sendet E-Mail an `team@events-52grad.de`
+2. E-Mail landet im IONOS-Postfach (INBOX)
+3. IMAP-Sync Worker auf dem VPS prüft alle 2 Minuten auf neue Mails
+4. Neue Mail wird geparst (Header, Body, Anhänge)
+5. Thread wird zugeordnet oder neu erstellt
+6. Kunde wird über E-Mail-Adresse gematcht
+7. E-Mail + Anhänge werden in Supabase gespeichert
+8. Mitarbeiter sieht die Mail in der WeWeb-App
+
+## Datenfluss: Ausgehende E-Mail
+
+1. Mitarbeiter verfasst E-Mail in der WeWeb-App
+2. WeWeb sendet POST-Request an `https://api.events-52grad.de/api/send`
+3. SMTP-API versendet die Mail über `smtp.ionos.de`
+4. Kopie wird per IMAP APPEND in "Gesendete Objekte" abgelegt
+5. E-Mail wird in Supabase gespeichert
+6. Thread wird aktualisiert
+
+## Ports und Verbindungen
+
+| Dienst | Port | Protokoll | Richtung |
+|--------|------|-----------|----------|
+| SSH | 22 | TCP | Eingehend |
+| Caddy (HTTP) | 80 | TCP | Eingehend |
+| Caddy (HTTPS) | 443 | TCP | Eingehend |
+| Express API | 3000 | TCP | Intern (Caddy → Express) |
+| IMAP (IONOS) | 993 | TLS | Ausgehend |
+| SMTP (IONOS) | 465 | TLS | Ausgehend |

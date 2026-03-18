@@ -1,0 +1,124 @@
+---
+title: "E-Mail senden"
+description: "POST /api/send"
+api: "POST https://api.events-52grad.de/api/send"
+---
+
+## Request
+
+### Headers
+
+```
+Content-Type: application/json
+Authorization: Bearer {API_SECRET}
+```
+
+### Body
+
+| Feld | Typ | Pflicht | Beschreibung |
+|------|-----|---------|-------------|
+| `to` | string | ✅ | Empfänger-Adresse(n) |
+| `subject` | string | ✅ | Betreff |
+| `text_body` | string | ✅* | Plain-Text-Inhalt |
+| `html_body` | string | ✅* | HTML-Inhalt |
+| `cc` | string | — | CC-Empfänger |
+| `bcc` | string | — | BCC-Empfänger |
+| `in_reply_to` | string | — | Message-ID der Ursprungsmail (für Threading) |
+| `thread_id` | string | — | UUID des bestehenden Threads |
+| `customer_id` | string | — | UUID des zugehörigen Kunden |
+| `company_id` | string | — | UUID des zugehörigen Unternehmens |
+| `attachments` | array | — | Anhänge (siehe unten) |
+
+\* Mindestens `text_body` oder `html_body` muss angegeben werden.
+
+### Attachment-Objekt
+
+| Feld | Typ | Beschreibung |
+|------|-----|-------------|
+| `filename` | string | Dateiname |
+| `content` | string | Base64-kodierter Inhalt |
+| `content_type` | string | MIME-Type (z.B. `application/pdf`) |
+
+## Beispiele
+
+### Einfache Mail
+
+```json
+{
+  "to": "kunde@example.com",
+  "subject": "Vielen Dank für Ihre Anfrage",
+  "text_body": "Guten Tag, wir melden uns in Kürze bei Ihnen."
+}
+```
+
+### Antwort auf bestehende Mail
+
+```json
+{
+  "to": "kunde@example.com",
+  "subject": "Re: Anfrage Hochzeit Juli",
+  "text_body": "Vielen Dank für Ihre Nachricht...",
+  "in_reply_to": "<original-message-id@ionos.de>",
+  "customer_id": "abc-123-def"
+}
+```
+
+### Mail mit Anhang
+
+```json
+{
+  "to": "kunde@example.com",
+  "subject": "Ihr Angebot",
+  "text_body": "Anbei finden Sie unser Angebot.",
+  "attachments": [
+    {
+      "filename": "Angebot.pdf",
+      "content": "JVBERi0xLjQK...",
+      "content_type": "application/pdf"
+    }
+  ]
+}
+```
+
+## Response
+
+### Erfolg (200)
+
+```json
+{
+  "status": "sent",
+  "id": "uuid-der-email-in-supabase",
+  "messageId": "<generated-message-id@ionos.de>",
+  "threadId": "uuid-des-threads"
+}
+```
+
+### Teilweise erfolgreich (207)
+
+E-Mail wurde gesendet, aber nicht in der Datenbank gespeichert:
+
+```json
+{
+  "status": "partial",
+  "message": "E-Mail wurde gesendet, aber nicht in der Datenbank gespeichert",
+  "messageId": "<generated-message-id@ionos.de>",
+  "error": "Fehlerbeschreibung"
+}
+```
+
+### Fehler (400)
+
+```json
+{
+  "error": "Empfänger (to) und Betreff (subject) sind Pflicht"
+}
+```
+
+### Fehler (500)
+
+```json
+{
+  "error": "E-Mail-Versand fehlgeschlagen",
+  "details": "Fehlerbeschreibung"
+}
+```

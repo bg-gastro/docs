@@ -1,0 +1,48 @@
+---
+title: "Threading"
+description: "Wie E-Mail-Threads aufgebaut und zugeordnet werden."
+---
+
+## Wie funktioniert E-Mail-Threading?
+
+E-Mail-Threading basiert auf drei RFC-Headern:
+
+| Header | Zweck | Beispiel |
+|--------|-------|---------|
+| `Message-ID` | Eindeutige ID jeder Mail | `<abc123@ionos.de>` |
+| `In-Reply-To` | Message-ID der Mail, auf die geantwortet wird | `<abc123@ionos.de>` |
+| `References` | Gesamte Kette aller Message-IDs im Thread | `<abc123@ionos.de> <def456@ionos.de>` |
+
+## Thread-Zuordnung im Sync-Worker
+
+Beim Verarbeiten einer neuen Mail:
+
+1. **Thread-Key bestimmen:** Erstes Element aus `References`, oder eigene `Message-ID` als Fallback
+2. **Bestehenden Thread suchen** über `thread_key` in `email_threads`
+3. **Fallback:** Wenn nicht gefunden und `In-Reply-To` vorhanden, Parent-Mail suchen und deren Thread verwenden
+4. **Neuen Thread anlegen** wenn kein bestehender gefunden wurde
+
+## Thread-Zuordnung beim Senden
+
+Wenn ein Mitarbeiter über die API antwortet:
+
+1. `in_reply_to` wird als Message-ID der Ursprungsmail übergeben
+2. API baut die `References`-Kette auf (alle bisherigen + Parent)
+3. Setzt `In-Reply-To` und `References` Header in der SMTP-Mail
+4. Empfänger sieht die Antwort als Teil des bestehenden Threads
+
+## Betreff-Bereinigung
+
+Thread-Subjects werden automatisch bereinigt:
+
+```
+Re: AW: Fwd: Anfrage Hochzeit Juli → Anfrage Hochzeit Juli
+```
+
+Entfernte Prefixe: `Re:`, `AW:`, `Fwd:`, `WG:`, `Aw:`, `Wg:`
+
+## Bekannte Einschränkungen
+
+- Wenn ein Kunde den Betreff ändert und keine `In-Reply-To`/`References`-Header setzt, wird ein neuer Thread erstellt
+- Manche Webmail-Clients (besonders ältere) setzen keine sauberen References-Header
+- Es gibt keine Betreff-basierte Fuzzy-Matching-Logik — Threading basiert ausschließlich auf Message-IDs

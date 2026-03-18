@@ -1,0 +1,50 @@
+---
+title: "Monitoring"
+description: "Wie ihr überwacht, ob alles läuft."
+---
+
+## Health Check
+
+Die API hat einen öffentlichen Health-Endpunkt:
+
+```
+https://api.events-52grad.de/api/health
+```
+
+Empfehlung: Einen Uptime-Monitor einrichten (z.B. UptimeRobot, Betterstack) der diesen Endpunkt alle 5 Minuten prüft und euch bei Ausfall per E-Mail oder Slack benachrichtigt.
+
+## Sync-Status prüfen
+
+Im Supabase Dashboard → Tabelle `email_sync_state`:
+
+| Spalte | Guter Zustand | Problem |
+|--------|---------------|---------|
+| `sync_status` | `idle` | `error` |
+| `last_synced_at` | Innerhalb der letzten 5 Min | Älter als 10 Min |
+| `error_message` | `NULL` | Fehlerbeschreibung |
+
+## PM2-Monitoring
+
+```bash
+# Live-Ressourcen-Verbrauch
+pm2 monit
+
+# Neustart-Zähler prüfen (hohe Zahl = Prozess crasht wiederholt)
+pm2 status
+```
+
+## Disk-Space prüfen
+
+```bash
+df -h
+```
+
+Kritisch wird es unter 5 GB frei — dann Logs rotieren oder alte Daten bereinigen.
+
+## RAM prüfen
+
+```bash
+free -h
+```
+
+Bei 2 GB RAM sollte der Verbrauch unter 1.5 GB bleiben. Falls höher: PM2-Logs und Node.js Memory Leaks prüfen.

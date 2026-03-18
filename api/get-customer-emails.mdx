@@ -1,0 +1,39 @@
+---
+title: "Kunden-E-Mails"
+description: "GET /api/customer/:customerId/emails"
+api: "GET https://api.events-52grad.de/api/customer/{customerId}/emails"
+---
+
+## Request
+
+```
+GET /api/customer/{customerId}/emails
+Authorization: Bearer {API_SECRET}
+```
+
+### Parameter
+
+| Parameter | Typ | Beschreibung |
+|-----------|-----|-------------|
+| `customerId` | UUID | ID des Kunden aus `customers` |
+
+## Response (200)
+
+```json
+{
+  "emails": [
+    {
+      "id": "uuid",
+      "direction": "inbound",
+      "from_address": {"name": "Max Mustermann", "address": "max@example.com"},
+      "subject": "Anfrage Hochzeit Juli",
+      "text_body": "...",
+      "date": "2026-03-18T10:00:00Z",
+      "has_attachments": false,
+      "email_attachments": []
+    }
+  ]
+}
+```
+
+E-Mails werden nach Datum sortiert (neueste zuerst), limitiert auf 50 Einträge.

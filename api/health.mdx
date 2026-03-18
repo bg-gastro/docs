@@ -1,0 +1,33 @@
+---
+title: "Health Check"
+description: "GET /api/health"
+api: "GET https://api.events-52grad.de/api/health"
+---
+
+## Request
+
+```
+GET /api/health
+```
+
+<Info>
+  Dieser Endpunkt benötigt **keine** Authentifizierung.
+</Info>
+
+## Response (200)
+
+```json
+{
+  "status": "ok",
+  "service": "email-worker-api",
+  "timestamp": "2026-03-18T15:34:16.741Z"
+}
+```
+
+## Verwendung
+
+Geeignet für Uptime-Monitoring (z.B. UptimeRobot, Betterstack) oder als schneller Check, ob die API läuft:
+
+```bash
+curl https://api.events-52grad.de/api/health
+```

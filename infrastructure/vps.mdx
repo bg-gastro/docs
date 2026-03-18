@@ -1,0 +1,90 @@
+---
+title: "VPS"
+description: "Server-Konfiguration und Zugangsdaten."
+---
+
+## Server-Details
+
+| Eigenschaft | Wert |
+|-------------|------|
+| **IP-Adresse** | `217.154.76.29` |
+| **Betriebssystem** | Ubuntu 24.04 LTS |
+| **CPU** | 2 vCore |
+| **RAM** | 2 GB |
+| **Storage** | 80 GB NVMe SSD |
+| **Hoster** | IONOS (deutsches Rechenzentrum) |
+| **Kosten** | 2 €/Monat (24-Monats-Vertrag) |
+
+## SSH-Zugang
+
+```bash
+ssh deploy@217.154.76.29
+```
+
+<Warning>
+  Der Root-Login ist deaktiviert. Nur Key-basierter Login ist erlaubt — kein Passwort.
+</Warning>
+
+### Neuen SSH-Key hinzufügen (z.B. für Yukio)
+
+```bash
+# Einloggen als deploy
+ssh deploy@217.154.76.29
+
+# Public Key eintragen
+nano ~/.ssh/authorized_keys
+# → Key als neue Zeile einfügen, speichern
+```
+
+## Installierte Software
+
+| Software | Version | Zweck |
+|----------|---------|-------|
+| Node.js | 20 LTS | Runtime für Worker + API |
+| PM2 | Latest | Prozessmanager |
+| Caddy | 2.11 | Reverse Proxy + SSL |
+| UFW | Standard | Firewall |
+
+## Firewall-Regeln
+
+```bash
+sudo ufw status
+```
+
+| Port | Protokoll | Dienst |
+|------|-----------|--------|
+| 22/tcp | SSH | Server-Zugang |
+| 80/tcp | HTTP | Caddy (Redirect → HTTPS) |
+| 443/tcp | HTTPS | Caddy (API) |
+| 3000/tcp | HTTP | Express API (intern) |
+
+## Projektstruktur
+
+```
+/home/deploy/email-worker/
+├── .env                    # Zugangsdaten (NICHT im Git)
+├── .gitignore
+├── package.json
+├── src/
+│   ├── lib/
+│   │   └── db.js           # Supabase Client + Logging
+│   ├── sync/
+│   │   └── worker.js       # IMAP Sync Worker
+│   └── api/
+│       └── server.js       # SMTP Versand-API
+├── test-imap.js            # IMAP-Verbindungstest
+├── test-smtp.js            # SMTP-Verbindungstest
+└── test-folders.js         # IMAP-Ordner auflisten
+```
+
+## Kein Backup-System
+
+Der VPS hat kein Hoster-Backup. Das ist bewusst so:
+
+- **Daten** liegen in Supabase, nicht auf dem VPS
+- **Code** liegt in GitHub (`bg-gastro/email-worker`)
+- **Konfiguration** (.env) muss separat gesichert werden
+
+<Info>
+  Bei einem Server-Crash: Neuen VPS aufsetzen, Repository klonen, .env wiederherstellen, PM2 starten. Geschätzte Wiederherstellungszeit: 30 Minuten.
+</Info>
