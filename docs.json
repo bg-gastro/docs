@@ -1,51 +1,101 @@
 {
-  "$schema": "https://mintlify.com/schema.json",
+
+  "$schema": "https://mintlify.com/docs.json",
+
   "theme": "maple",
-  "name": "Hannover Event – Interne Dokumentation",
+
+  "name": "Events 52 Grad",
+
   "colors": {
-    "primary": "#1B4D6E",
-    "light": "#D4A853",
-    "dark": "#1B4D6E",
-    "anchors": {
-      "from": "#1B4D6E",
-      "to": "#D4A853"
-    }
+
+    "primary": "#B07E48",
+
+    "light": "#EADFD6",
+
+    "dark": "#9e6e3c"
+
   },
-  "topbarCtaButton": {
-    "name": "Web-App",
-    "url": "https://events-52grad.de"
+
+  "navbar": {
+
+    "links": [
+
+      {
+
+        "label": "GitHub",
+
+        "href": "https://github.com/bg-gastro"
+
+      }
+
+    ],
+
+    "primary": {
+
+      "type": "button",
+
+      "label": "Web-App",
+
+      "href": "https://events-52grad.de"
+
+    }
+
   },
-  "anchors": [
-    {
-      "name": "GitHub",
-      "icon": "github",
-      "url": "https://github.com/bg-gastro"
-    }
-  ],
-  "navigation": [
-    {
-      "group": "Übersicht",
-      "pages": ["introduction", "architecture"]
-    },
-    {
-      "group": "Infrastruktur",
-      "pages": ["infrastructure/vps", "infrastructure/dns", "infrastructure/supabase"]
-    },
-    {
-      "group": "E-Mail-System",
-      "pages": ["email/overview", "email/imap-sync", "email/smtp-api", "email/threading", "email/attachments"]
-    },
-    {
-      "group": "API-Referenz",
-      "pages": ["api/authentication", "api/send-email", "api/get-thread", "api/get-customer-emails", "api/health"]
-    },
-    {
-      "group": "WeWeb",
-      "pages": ["weweb/collections", "weweb/workflows"]
-    },
-    {
-      "group": "Betrieb",
-      "pages": ["operations/pm2", "operations/monitoring", "operations/troubleshooting"]
-    }
-  ]
+
+  "navigation": {
+
+    "groups": [
+
+      {
+
+        "group": "Übersicht",
+
+        "pages": ["introduction", "architecture"]
+
+      },
+
+      {
+
+        "group": "Infrastruktur",
+
+        "pages": ["infrastructure/vps", "infrastructure/dns", "infrastructure/supabase"]
+
+      },
+
+      {
+
+        "group": "E-Mail-System",
+
+        "pages": ["email/overview", "email/imap-sync", "email/smtp-api", "email/threading", "email/attachments"]
+
+      },
+
+      {
+
+        "group": "API-Referenz",
+
+        "pages": ["api/authentication", "api/send-email", "api/get-thread", "api/get-customer-emails", "api/health"]
+
+      },
+
+      {
+
+        "group": "WeWeb",
+
+        "pages": ["weweb/collections", "weweb/workflows"]
+
+      },
+
+      {
+
+        "group": "Betrieb",
+
+        "pages": ["operations/pm2", "operations/monitoring", "operations/troubleshooting"]
+
+      }
+
+    ]
+
+  }
+
 }
